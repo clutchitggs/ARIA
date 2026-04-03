@@ -1,10 +1,12 @@
 # ARIA
 
-**AI system health monitor. Detects expensive failures before they happen.**
+**Prevents expensive AI failures in real-time.**
 
-ARIA sits between your app and your AI provider. It monitors system health in real-time and detects failures — agent loops, cascading rate limits, infrastructure degradation, security threats, budget overruns.
+ARIA is a runtime protection layer for AI API calls. It detects and blocks agent loops, cascading rate limits, infrastructure failures, security threats, corrupted input, and budget overruns — before they cost you money.
 
-**Currently in shadow mode (pilot): ARIA observes only. It cannot block, change, throttle, or affect your app in any way. Your app runs exactly as if ARIA isn't there. Zero risk.**
+Built for teams running AI agents or high-volume LLM workloads.
+
+**In production, ARIA actively blocks dangerous calls. During this pilot, it runs in shadow mode — observing and reporting what it would have done, with zero effect on your app.**
 
 ---
 
@@ -90,14 +92,14 @@ Synthetic validation proves the logic works. Real-world pilot in progress to val
 
 ## How the Pilot Works
 
-ARIA runs in **shadow mode**. This means:
+ARIA has two modes:
 
-- ARIA runs all its checks on every call
-- ARIA logs what it **would have done** (blocked, warned, cached)
-- ARIA **never actually does anything** — every call goes straight to your AI provider unchanged
-- Your app behaves **exactly** as if ARIA isn't installed
+- **Production mode** — actively blocks dangerous calls, prevents loops, stops cascades
+- **Shadow mode (current pilot)** — runs all the same checks but only observes. Never blocks, never changes anything. Your app is completely unaffected.
 
-**Think of it like a security camera that records but doesn't lock any doors.**
+During the pilot, ARIA logs what it **would have done** — so we can validate detection accuracy on real traffic before turning on active protection.
+
+**Think of it like a security system in test mode — cameras on, alarms off.**
 
 ---
 
@@ -199,6 +201,14 @@ No. The diagnostic API only receives health numbers (rate limit %, latency ms, e
 
 **What if I don't like it?**
 Remove the 3 lines. Your app goes back to exactly how it was.
+
+---
+
+---
+
+## Roadmap
+
+Shadow mode is step one. ARIA is evolving from detection to prevention to full AI runtime control.
 
 ---
 
