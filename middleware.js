@@ -38,6 +38,7 @@ class Aria {
     this.context = options.context || {};
     this.enabled = options.enabled !== false;
     this.shadow = options.shadow || false; // Shadow mode: observe only, never block
+    this.pilotId = options.pilotId || null; // Unique ID for this pilot tester
 
     // Local infrastructure instances
     this._cache = new PromptCache({ maxEntries: 10000, maxAgeMs: 3600000 });
@@ -354,6 +355,7 @@ class Aria {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        pilot: this.pilotId,
         system_state: {
           rate_limit_percent: systemState.rate_limit_percent,
           context_utilization: systemState.context_utilization,
@@ -436,7 +438,7 @@ class Aria {
       fetch(this.diagnosticEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: { type, saved, detail, time: new Date().toISOString(), ...(extra || {}) } })
+        body: JSON.stringify({ pilot: this.pilotId, event: { type, saved, detail, time: new Date().toISOString(), ...(extra || {}) } })
       }).catch(() => {}); // silent fail — never disrupt the app
     } catch (_) {}
   }
