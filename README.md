@@ -4,7 +4,7 @@
 
 ARIA is a runtime protection layer for AI API calls. It detects and blocks agent loops, cascading rate limits, infrastructure failures, security threats, corrupted input, and budget overruns — before they cost you money.
 
-Built for teams running AI agents or high-volume LLM workloads.
+Built for teams running AI agents or high-volume LLM workloads. Think of it as circuit breakers for your AI pipeline.
 
 **In production, ARIA actively blocks dangerous calls. During this pilot, it runs in shadow mode — observing and reporting what it would have done, with zero effect on your app.**
 
@@ -21,13 +21,22 @@ npm install
 node demo.js
 ```
 
-Output:
+Simulated traffic with injected failures (loops, rate limits, infrastructure degradation):
 
 ```
-  PHASE 1: Normal traffic (healthy system)
-  [ 1] API call (healthy)             healthy
-  [ 2] API call (healthy)             healthy
+  Without ARIA                          With ARIA
+  ─────────────────────────────         ─────────────────────────────
+  Agent loops 47 times → $2.31 wasted   Blocked at call #3 → saved $2.26
+  Cascade retries burn $4.80            Detected at 95% rate limit → saved $4.80
+  Bad input → 60 hallucinated calls     Blocked before API → saved $3.12
+  Budget exhausted → $9.00 overrun      Hard stop at $0 → saved $9.00
 
+  Total: $16.11 wasted                  Total: $0.00 wasted
+```
+
+Run `node demo.js` to watch ARIA detect each failure type live:
+
+```
   PHASE 3: Agent stuck in a loop
   [ 7] API call (1st attempt)         healthy
   [ 8] API call (2nd attempt)         healthy — same call repeated...
