@@ -76,9 +76,9 @@ const result = await aria.call({
 // result is your normal AI response — completely unchanged
 ```
 
-### 3. That's It
+### 3. Run Your App Normally
 
-Your app works exactly as before. ARIA watches silently in the background.
+Your app works exactly as before. ARIA watches silently in the background. Let it run for a few days with your normal traffic — the more calls it observes, the more useful the data. No action needed from you.
 
 ---
 
