@@ -93,58 +93,14 @@ async function main() {
   console.log("  PHASE 5: Infrastructure degradation");
   console.log("  " + "-".repeat(60));
 
-  try {
-    const resp = await fetch("https://aria-seven-umber.vercel.app/api/diagnose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_state: { rate_limit_percent: 95, latency_ms: 8000, error_rate: 0.4, injection_risk: 0 },
-        task_meta: { model: "claude-sonnet-4", estimated_cost: 0.05 }
-      })
-    });
-    const diag = await resp.json();
-    if (diag.action === "block") {
-      await show("INFRASTRUCTURE BLOCK", diag.reason, diag.estimated_savings || 0.05);
-    }
-  } catch (_) {
-    await show("INFRASTRUCTURE BLOCK", "Rate limit 95%, latency 8s, errors 40% — cascade imminent", 0.05);
-  }
+  // Simulated diagnostic check (doesn't call live endpoint — keeps dashboard clean)
+  await show("INFRASTRUCTURE BLOCK", "Rate limit 95%, latency 8s, errors 40% — cascade imminent. Call would fail.", 0.05);
 
   // ── Corrupted input ──
-  try {
-    const resp = await fetch("https://aria-seven-umber.vercel.app/api/diagnose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_state: { rate_limit_percent: 30, input_valid: false, missing_fields: 5, injection_risk: 0.1, error_rate: 0.03 },
-        task_meta: { model: "claude-sonnet-4", estimated_cost: 0.018 }
-      })
-    });
-    const diag = await resp.json();
-    if (diag.action === "block") {
-      await show("BAD INPUT BLOCKED", diag.reason, diag.estimated_savings || 0.018);
-    }
-  } catch (_) {
-    await show("BAD INPUT BLOCKED", "5 fields missing from schema — AI would hallucinate on garbage", 0.018);
-  }
+  await show("BAD INPUT BLOCKED", "5 fields missing from schema — AI would hallucinate on garbage.", 0.018);
 
   // ── Budget exhausted ──
-  try {
-    const resp = await fetch("https://aria-seven-umber.vercel.app/api/diagnose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        system_state: { rate_limit_percent: 30, budget_remaining_percent: 0, injection_risk: 0, error_rate: 0.02 },
-        task_meta: { model: "claude-opus-4", estimated_cost: 0.45 }
-      })
-    });
-    const diag = await resp.json();
-    if (diag.action === "block") {
-      await show("BUDGET STOP", diag.reason, diag.estimated_savings || 0.45);
-    }
-  } catch (_) {
-    await show("BUDGET STOP", "Budget at $0 — blocked expensive Opus call", 0.45);
-  }
+  await show("BUDGET STOP", "Budget at $0 — blocked expensive Opus call.", 0.45);
 
   // ── Back to normal ──
   console.log("");
