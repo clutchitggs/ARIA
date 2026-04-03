@@ -78,11 +78,7 @@ const result = await aria.call({
 
 ### 3. That's It
 
-Your app works exactly as before. ARIA watches silently. You can check what it found anytime:
-
-```js
-console.log(aria.getShadowReport());
-```
+Your app works exactly as before. ARIA watches silently in the background.
 
 ---
 
@@ -110,7 +106,7 @@ const aria = new Aria({
   apiKey: "sk-...",                         // your AI provider API key
 
   // Diagnostic engine
-  diagnosticEndpoint: "https://...",        // ARIA diagnostic API URL
+  diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose",
 
   // Optional
   shadow: true,                             // pilot mode — observe only (default: false)
