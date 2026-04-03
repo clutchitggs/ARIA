@@ -4,7 +4,7 @@
   "description": "ARIA — AI system health monitor. Prevents expensive failures before they happen. Never changes your AI model or output.",
   "main": "middleware.js",
   "keywords": ["ai", "llm", "monitoring", "failure-prevention", "diagnostics"],
-  "license": "MIT",
+  "license": "BSL-1.1",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0"
   }

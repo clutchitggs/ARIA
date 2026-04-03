@@ -149,4 +149,4 @@ Remove the 3 lines. Your app goes back to exactly how it was.
 
 ## License
 
-MIT
+Business Source License 1.1 — Free to use in your apps. Cannot be used to build a competing product. Converts to Apache 2.0 in 2030. See LICENSE file for details.

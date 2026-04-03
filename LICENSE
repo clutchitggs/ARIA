@@ -1,0 +1,36 @@
+Business Source License 1.1
+
+Licensor: Tal Nagar
+Licensed Work: ARIA SDK
+
+The Licensed Work is provided under the terms of the Business Source
+License 1.1 (this "License"). The Licensed Work is (c) 2026 Tal Nagar.
+
+TERMS
+
+The Licensor grants you a non-exclusive, worldwide, royalty-free license
+to use, copy, modify, and distribute the Licensed Work, subject to the
+following condition:
+
+You may NOT use the Licensed Work, or any derivative work based on it,
+to provide a product or service that competes with the Licensed Work or
+any product or service offered by the Licensor.
+
+A "competing product or service" is one that provides AI API call
+monitoring, AI system health diagnostics, or AI failure prevention
+as its primary function.
+
+You ARE permitted to:
+- Use the Licensed Work in your own applications and services
+- Modify the Licensed Work for your own internal use
+- Use the Licensed Work for evaluation, testing, and development
+
+Change Date: April 3, 2030
+
+On the Change Date, this License converts to the Apache License,
+Version 2.0. After that date, the Licensed Work is available under
+Apache 2.0 with no additional restrictions.
+
+DISCLAIMER
+
+THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
