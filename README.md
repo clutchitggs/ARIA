@@ -62,7 +62,7 @@ const Aria = require("aria-sdk");
 const aria = new Aria({
   provider: "anthropic",             // or "openai" or "google"
   apiKey: process.env.ANTHROPIC_API_KEY,
-  diagnosticEndpoint: "YOUR_ENDPOINT_URL",
+  diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose",
   shadow: true                       // pilot mode — observe only, zero effect
 });
 
