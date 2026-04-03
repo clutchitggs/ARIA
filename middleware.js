@@ -38,7 +38,7 @@ class Aria {
     this.context = options.context || {};
     this.enabled = options.enabled !== false;
     this.shadow = options.shadow || false; // Shadow mode: observe only, never block
-    this.pilotId = options.pilotId || null; // Unique ID for this pilot tester
+    this.pilotId = options.pilotId || ("pilot-" + Math.random().toString(36).slice(2, 8)); // Auto-generated unique ID
 
     // Local infrastructure instances
     this._cache = new PromptCache({ maxEntries: 10000, maxAgeMs: 3600000 });
