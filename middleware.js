@@ -112,7 +112,7 @@ class Aria {
           if (cached) {
             this._savings.cache_hits.count++;
             this._savings.cache_hits.saved += callCost;
-            this._reportEvent("cache_hit", callCost, "Would have returned cached response");
+            this._reportEvent("cache_hit", callCost, "Would have returned cached response", { model: request.model });
             this._shadowLog.push({ type: "cache_hit", would_have_saved: callCost, timestamp: new Date().toISOString() });
           }
         }
@@ -126,7 +126,7 @@ class Aria {
         if (loopCheck.isLoop) {
           this._savings.loops_blocked.count++;
           this._savings.loops_blocked.saved += callCost;
-          this._reportEvent("loop_blocked", callCost, loopCheck.detail);
+          this._reportEvent("loop_blocked", callCost, loopCheck.detail, { model: request.model });
           this._shadowLog.push({ type: "loop_blocked", reason: loopCheck.detail, would_have_saved: callCost, timestamp: new Date().toISOString() });
         }
       }
@@ -136,7 +136,7 @@ class Aria {
       if (security.blocked) {
         this._savings.security_blocked.count++;
         this._savings.security_blocked.saved += callCost;
-        this._reportEvent("security_blocked", callCost, security.block_reason);
+        this._reportEvent("security_blocked", callCost, security.block_reason, { model: request.model });
         this._shadowLog.push({ type: "security_blocked", reason: security.block_reason, would_have_saved: callCost, timestamp: new Date().toISOString() });
       }
 
@@ -155,7 +155,7 @@ class Aria {
       // Check rate limits (would it have throttled?)
       const rateLimit = assessRateLimit(systemState);
       if (rateLimit.actions.length > 0) {
-        this._reportEvent("would_throttle", 0, `${rateLimit.actions.length} throttle actions`);
+        this._reportEvent("would_throttle", 0, `${rateLimit.actions.length} throttle actions`, { model: request.model });
         this._shadowLog.push({ type: "would_throttle", actions: rateLimit.actions.length, timestamp: new Date().toISOString() });
       }
 
@@ -191,7 +191,7 @@ class Aria {
         if (loopCheck.isLoop) {
           this._savings.loops_blocked.count++;
           this._savings.loops_blocked.saved += callCost;
-          this._reportEvent("loop_blocked", callCost, loopCheck.detail);
+          this._reportEvent("loop_blocked", callCost, loopCheck.detail, { model: request.model });
           return {
             _aria: { status: "loop_blocked", reason: loopCheck.detail, saved: callCost, processing_time_ms: Date.now() - startTime },
             error: { type: "loop_blocked", message: loopCheck.detail }
@@ -204,7 +204,7 @@ class Aria {
       if (security.blocked) {
         this._savings.security_blocked.count++;
         this._savings.security_blocked.saved += callCost;
-        this._reportEvent("security_blocked", callCost, security.block_reason);
+        this._reportEvent("security_blocked", callCost, security.block_reason, { model: request.model });
         return {
           _aria: { status: "blocked", reason: security.block_reason, saved: callCost, processing_time_ms: Date.now() - startTime },
           error: { type: "security_blocked", message: security.block_reason }
@@ -268,6 +268,14 @@ class Aria {
 
     // ── STEP 8: COLLECT SIGNALS ──
     this._collectSignals(apiResult, latencyMs);
+
+    // Report successful call to dashboard (for token/cost/model tracking)
+    this._reportEvent("pass", 0, "Healthy call", {
+      model: request.model,
+      tokens_in: apiResult.inTok || 0,
+      tokens_out: apiResult.outTok || 0,
+      cost: apiResult.cost || 0
+    });
 
     // ── STEP 9: CACHE RESPONSE ──
     if (apiResult.ok && request.temperature !== undefined && request.temperature <= 0.3) {
@@ -422,13 +430,13 @@ class Aria {
 
   // Report local events to diagnostic endpoint (fire-and-forget)
   // So you can see ALL ARIA activity, not just diagnostic checks
-  _reportEvent(type, saved, detail) {
+  _reportEvent(type, saved, detail, extra) {
     if (!this.diagnosticEndpoint) return;
     try {
       fetch(this.diagnosticEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event: { type, saved, detail, time: new Date().toISOString() } })
+        body: JSON.stringify({ event: { type, saved, detail, time: new Date().toISOString(), ...(extra || {}) } })
       }).catch(() => {}); // silent fail — never disrupt the app
     } catch (_) {}
   }
