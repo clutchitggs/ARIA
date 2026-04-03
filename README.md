@@ -8,6 +8,42 @@ ARIA sits between your app and your AI provider. It monitors system health in re
 
 ---
 
+## See It In Action
+
+No API key needed. Run the demo:
+
+```bash
+git clone https://github.com/clutchitggs/ARIA.git
+cd ARIA
+npm install
+node demo.js
+```
+
+Output:
+
+```
+  PHASE 1: Normal traffic (healthy system)
+  [ 1] API call (healthy)             healthy
+  [ 2] API call (healthy)             healthy
+
+  PHASE 3: Agent stuck in a loop
+  [ 7] API call (1st attempt)         healthy
+  [ 8] API call (2nd attempt)         healthy — same call repeated...
+  [ 9] LOOP BLOCKED                   DETECTED  saved $0.0540
+       Agent stuck — same call 3x in 60s. Blocked to stop token burn.
+
+  PHASE 5: Infrastructure degradation
+  [12] INFRASTRUCTURE BLOCK           DETECTED  saved $0.0500
+       Infrastructure failing (health: 22%). Call would fail.
+  [14] BUDGET STOP                    DETECTED  saved $0.4500
+       Budget exhausted — blocked expensive call.
+
+  Total calls: 17 | Issues detected: 6 | Would have saved: $0.64
+  Quality impact: ZERO
+```
+
+---
+
 ## What It Detects
 
 | Failure Type | What Happens Without Detection | What ARIA Reports |
@@ -19,16 +55,36 @@ ARIA sits between your app and your AI provider. It monitors system health in re
 | Prompt injection | Attacker hijacks AI behavior | "Injection pattern detected. Would quarantine" |
 | Infrastructure degraded | Calls fail silently, retries multiply | "System health degraded. Would prevent $X in failed calls" |
 
+---
+
+## How It Works
+
+ARIA runs checks on every API call using:
+
+- **Pattern detection** — identifies repeated calls (stuck agents), known attack signatures, and credential exposure
+- **Health scoring** — monitors rate limits, latency, error rates, and budget in real-time
+- **Threshold analysis** — determines when system conditions make API calls likely to fail or produce garbage
+- **Signal correlation** — combines multiple weak signals to detect issues no single metric would catch (e.g., moderate rate pressure + rising latency + increasing errors = cascade imminent)
+
+Local checks (loops, security, cache) run on your machine. Health scoring runs on ARIA's diagnostic API — it receives only numerical health indicators, never prompts or API keys.
+
+---
+
 ## Validation
 
-Tested across 4,985 synthetic cases (5 independent runs, 997 cases each):
+Tested across 4,985 synthetic cases (5 independent runs, different random inputs):
 
-| Metric | Result |
-|---|---|
-| Sensitivity (catches failures) | **99.2%** average |
-| Specificity (lets healthy calls through) | **100%** |
-| False positives | **0** across all runs |
-| Precision (every detection justified) | **100%** |
+| Detection Type | Catch Rate | Notes |
+|---|---|---|
+| Agent loops | **100%** | Caught every stuck agent across all runs |
+| Cascade failures | **100%** | Retry storms detected before amplification |
+| Budget overruns | **100%** | Hard stop on exhausted budget |
+| Rate limit storms | **94-100%** | Some edge cases with mild storms passed through |
+| Injection attacks | **93-100%** | Depends on confidence score threshold |
+| Corrupted input | **72-83%** | Weakest area — catches severe corruption, misses mild cases |
+| **False positives** | **0** | Never blocked a healthy call across all 4,985 cases |
+
+Synthetic validation proves the logic works. Real-world pilot in progress to validate on production traffic.
 
 ---
 
@@ -40,7 +96,6 @@ ARIA runs in **shadow mode**. This means:
 - ARIA logs what it **would have done** (blocked, warned, cached)
 - ARIA **never actually does anything** — every call goes straight to your AI provider unchanged
 - Your app behaves **exactly** as if ARIA isn't installed
-- After a few days, we review the data to see what ARIA found
 
 **Think of it like a security camera that records but doesn't lock any doors.**
 
