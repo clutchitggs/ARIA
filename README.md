@@ -51,7 +51,7 @@ ARIA runs in **shadow mode**. This means:
 ### 1. Install
 
 ```bash
-npm install github:YOUR_USERNAME/ARIA
+npm install github:clutchitggs/ARIA
 ```
 
 ### 2. Add to Your Code
