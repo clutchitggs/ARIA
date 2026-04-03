@@ -97,70 +97,127 @@ class Aria {
     // Build system state from auto-collected signals
     const systemState = this._buildSystemState(request);
 
-    // ── STEP 1: CACHE CHECK (local) ──
-    if (request.temperature !== undefined && request.temperature <= 0.3 && request.messages) {
-      const cacheReq = { model: request.model, messages: request.messages, system: request.system,
-        temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools };
-      if (this._cache.isCacheable(cacheReq)) {
-        const key = this._cache.generateKey(cacheReq);
-        const cached = this._cache.get(key);
-        if (cached) {
-          this._savings.cache_hits.count++;
-          this._savings.cache_hits.saved += callCost;
-          return { ...cached.response, _aria: { status: "cached", saved: callCost, processing_time_ms: Date.now() - startTime } };
+    // ═══════════════════════════════════════════════════════════════════
+    // SHADOW MODE: Run all checks but NEVER block, cache, or throttle.
+    // Pure observation. Report everything. Zero effect on the app.
+    // ═══════════════════════════════════════════════════════════════════
+    if (this.shadow) {
+      // Check cache (would it have hit?)
+      if (request.temperature !== undefined && request.temperature <= 0.3 && request.messages) {
+        const cacheReq = { model: request.model, messages: request.messages, system: request.system,
+          temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools };
+        if (this._cache.isCacheable(cacheReq)) {
+          const key = this._cache.generateKey(cacheReq);
+          const cached = this._cache.get(key);
+          if (cached) {
+            this._savings.cache_hits.count++;
+            this._savings.cache_hits.saved += callCost;
+            this._reportEvent("cache_hit", callCost, "Would have returned cached response");
+            this._shadowLog.push({ type: "cache_hit", would_have_saved: callCost, timestamp: new Date().toISOString() });
+          }
         }
       }
-    }
 
-    // ── STEP 2: LOOP DETECTION (local) ──
-    if (request.messages) {
-      const loopKey = this._cache.generateKey({ model: request.model, messages: request.messages,
-        system: request.system, temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools });
-      const loopCheck = this._loopDetector.check(loopKey);
-      if (loopCheck.isLoop) {
-        this._savings.loops_blocked.count++;
-        this._savings.loops_blocked.saved += callCost;
-        if (this.shadow) {
+      // Check loops (would it have blocked?)
+      if (request.messages) {
+        const loopKey = this._cache.generateKey({ model: request.model, messages: request.messages,
+          system: request.system, temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools });
+        const loopCheck = this._loopDetector.check(loopKey);
+        if (loopCheck.isLoop) {
+          this._savings.loops_blocked.count++;
+          this._savings.loops_blocked.saved += callCost;
+          this._reportEvent("loop_blocked", callCost, loopCheck.detail);
           this._shadowLog.push({ type: "loop_blocked", reason: loopCheck.detail, would_have_saved: callCost, timestamp: new Date().toISOString() });
-          // Shadow mode: don't block, continue to make the call
-        } else {
+        }
+      }
+
+      // Check security (would it have blocked?)
+      const security = assessSecurity(systemState);
+      if (security.blocked) {
+        this._savings.security_blocked.count++;
+        this._savings.security_blocked.saved += callCost;
+        this._reportEvent("security_blocked", callCost, security.block_reason);
+        this._shadowLog.push({ type: "security_blocked", reason: security.block_reason, would_have_saved: callCost, timestamp: new Date().toISOString() });
+      }
+
+      // Check diagnostics (would it have blocked?)
+      if (this.diagnosticEndpoint) {
+        try {
+          const diagResult = await this._checkDiagnostics(systemState, { model: request.model, estimated_cost: callCost });
+          if (diagResult && diagResult.action === "block") {
+            this._savings.failures_prevented.count++;
+            this._savings.failures_prevented.saved += diagResult.estimated_savings || callCost;
+            this._shadowLog.push({ type: "diagnostic_block", reason: diagResult.reason, would_have_saved: diagResult.estimated_savings || callCost, timestamp: new Date().toISOString() });
+          }
+        } catch (_) {} // fail-safe
+      }
+
+      // Check rate limits (would it have throttled?)
+      const rateLimit = assessRateLimit(systemState);
+      if (rateLimit.actions.length > 0) {
+        this._reportEvent("would_throttle", 0, `${rateLimit.actions.length} throttle actions`);
+        this._shadowLog.push({ type: "would_throttle", actions: rateLimit.actions.length, timestamp: new Date().toISOString() });
+      }
+
+      // Shadow mode: skip ALL interventions, go straight to API call
+      // (jump to STEP 7 below)
+
+    } else {
+      // ═══════════════════════════════════════════════════════════════
+      // ACTIVE MODE: Full protection pipeline
+      // ═══════════════════════════════════════════════════════════════
+
+      // ── STEP 1: CACHE CHECK (local) ──
+      if (request.temperature !== undefined && request.temperature <= 0.3 && request.messages) {
+        const cacheReq = { model: request.model, messages: request.messages, system: request.system,
+          temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools };
+        if (this._cache.isCacheable(cacheReq)) {
+          const key = this._cache.generateKey(cacheReq);
+          const cached = this._cache.get(key);
+          if (cached) {
+            this._savings.cache_hits.count++;
+            this._savings.cache_hits.saved += callCost;
+            this._reportEvent("cache_hit", callCost, "Exact prompt match — returned cached response");
+            return { ...cached.response, _aria: { status: "cached", saved: callCost, processing_time_ms: Date.now() - startTime } };
+          }
+        }
+      }
+
+      // ── STEP 2: LOOP DETECTION (local) ──
+      if (request.messages) {
+        const loopKey = this._cache.generateKey({ model: request.model, messages: request.messages,
+          system: request.system, temperature: request.temperature, max_tokens: request.max_tokens, tools: request.tools });
+        const loopCheck = this._loopDetector.check(loopKey);
+        if (loopCheck.isLoop) {
+          this._savings.loops_blocked.count++;
+          this._savings.loops_blocked.saved += callCost;
+          this._reportEvent("loop_blocked", callCost, loopCheck.detail);
           return {
             _aria: { status: "loop_blocked", reason: loopCheck.detail, saved: callCost, processing_time_ms: Date.now() - startTime },
             error: { type: "loop_blocked", message: loopCheck.detail }
           };
         }
       }
-    }
 
-    // ── STEP 3: SECURITY SCAN (local) ──
-    const security = assessSecurity(systemState);
-    if (security.blocked) {
-      this._savings.security_blocked.count++;
-      this._savings.security_blocked.saved += callCost;
-      if (this.shadow) {
-        this._shadowLog.push({ type: "security_blocked", reason: security.block_reason, would_have_saved: callCost, timestamp: new Date().toISOString() });
-      } else {
+      // ── STEP 3: SECURITY SCAN (local) ──
+      const security = assessSecurity(systemState);
+      if (security.blocked) {
+        this._savings.security_blocked.count++;
+        this._savings.security_blocked.saved += callCost;
+        this._reportEvent("security_blocked", callCost, security.block_reason);
         return {
           _aria: { status: "blocked", reason: security.block_reason, saved: callCost, processing_time_ms: Date.now() - startTime },
           error: { type: "security_blocked", message: security.block_reason }
         };
       }
-    }
 
-    // ── STEP 4: DIAGNOSTIC CHECK (remote — ARIA's server) ──
-    if (this.diagnosticEndpoint) {
-      try {
-        const diagResult = await this._checkDiagnostics(systemState, {
-          model: request.model,
-          estimated_cost: callCost
-        });
-
-        if (diagResult && diagResult.action === "block") {
-          this._savings.failures_prevented.count++;
-          this._savings.failures_prevented.saved += diagResult.estimated_savings || callCost;
-          if (this.shadow) {
-            this._shadowLog.push({ type: "diagnostic_block", reason: diagResult.reason, would_have_saved: diagResult.estimated_savings || callCost, diagnostics: diagResult.diagnostics, timestamp: new Date().toISOString() });
-          } else {
+      // ── STEP 4: DIAGNOSTIC CHECK (remote — ARIA's server) ──
+      if (this.diagnosticEndpoint) {
+        try {
+          const diagResult = await this._checkDiagnostics(systemState, { model: request.model, estimated_cost: callCost });
+          if (diagResult && diagResult.action === "block") {
+            this._savings.failures_prevented.count++;
+            this._savings.failures_prevented.saved += diagResult.estimated_savings || callCost;
             return {
               _aria: {
                 status: "diagnostic_block", reason: diagResult.reason,
@@ -171,32 +228,24 @@ class Aria {
               error: { type: "diagnostic_block", message: diagResult.reason }
             };
           }
-        }
-
-        // Warn but continue
-        if (diagResult && diagResult.action === "warn") {
-          // Attach warning to response later
-        }
-      } catch (err) {
-        // FAIL-SAFE: if diagnostic API unreachable, let the call through
-        // The developer's app should never break because our server is down
+        } catch (_) {} // fail-safe
       }
-    }
 
-    // ── STEP 5: RATE LIMIT MANAGEMENT (local) ──
-    const rateLimit = assessRateLimit(systemState);
-    if (rateLimit.actions.length > 0) {
-      const maxDelay = Math.max(...rateLimit.actions.map(a => a.delay_ms || 0));
-      if (maxDelay > 0 && maxDelay <= 10000) {
-        await new Promise(r => setTimeout(r, maxDelay));
+      // ── STEP 5: RATE LIMIT MANAGEMENT (local) ──
+      const rateLimit = assessRateLimit(systemState);
+      if (rateLimit.actions.length > 0) {
+        const maxDelay = Math.max(...rateLimit.actions.map(a => a.delay_ms || 0));
+        if (maxDelay > 0 && maxDelay <= 10000) {
+          await new Promise(r => setTimeout(r, maxDelay));
+        }
       }
-    }
 
-    // ── STEP 6: BUDGET CHECK (local) ──
-    const budget = assessBudget(
-      { model: request.model, input_tokens: inputTokens, output_tokens: outputTokens },
-      systemState
-    );
+      // ── STEP 6: BUDGET CHECK (local) ──
+      const budget = assessBudget(
+        { model: request.model, input_tokens: inputTokens, output_tokens: outputTokens },
+        systemState
+      );
+    } // end active mode
 
     // ── STEP 7: MAKE API CALL ──
     const callStart = Date.now();
@@ -234,12 +283,10 @@ class Aria {
     return {
       ...apiResult.response,
       _aria: {
-        status: "pass_through",
+        status: this.shadow ? "shadow" : "pass_through",
         model: request.model,
         model_changed: false,
         provider,
-        warnings: [...budget.warnings, ...(security.issues.length > 0 ? [{ level: "security", message: security.issues.map(i => i.type).join(", ") }] : [])],
-        throttle_actions: rateLimit.actions,
         latency_ms: latencyMs,
         tokens: { input: apiResult.inTok || 0, output: apiResult.outTok || 0 },
         cost: apiResult.cost || 0,
@@ -371,6 +418,19 @@ class Aria {
     }
     if (request.tools) chars += JSON.stringify(request.tools).length;
     return Math.max(100, Math.ceil(chars / 4));
+  }
+
+  // Report local events to diagnostic endpoint (fire-and-forget)
+  // So you can see ALL ARIA activity, not just diagnostic checks
+  _reportEvent(type, saved, detail) {
+    if (!this.diagnosticEndpoint) return;
+    try {
+      fetch(this.diagnosticEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: { type, saved, detail, time: new Date().toISOString() } })
+      }).catch(() => {}); // silent fail — never disrupt the app
+    } catch (_) {}
   }
 
   _collectSignals(apiResult, latencyMs) {
