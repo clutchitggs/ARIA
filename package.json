@@ -1,7 +1,7 @@
 {
   "name": "aria-sdk",
   "version": "0.1.0",
-  "description": "ARIA — AI system health monitor. Prevents expensive failures before they happen. Never changes your AI model or output.",
+  "description": "ARIA — Free health audit for AI systems. Detects agent loops, cascading failures, and wasted spend. Never changes your AI model or output.",
   "main": "middleware.js",
   "keywords": ["ai", "llm", "monitoring", "failure-prevention", "diagnostics"],
   "license": "BSL-1.1",

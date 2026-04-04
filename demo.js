@@ -119,8 +119,8 @@ async function main() {
   console.log(`  Quality impact: ZERO — ARIA never changed any model or output`);
   console.log(line);
   console.log("");
-  console.log("  This was shadow mode. In production, ARIA does this silently");
-  console.log("  on every API call. Your app works normally. Failures don't.");
+  console.log("  Run aria.getReport() after a few days to see what");
+  console.log("  ARIA found in your real traffic. Free, no strings.");
   console.log("");
 }
 
