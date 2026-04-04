@@ -27,13 +27,11 @@ console.log(aria.getReport());
 ARIA Health Report
 ─────────────────────────────────────────
 Calls monitored:        4,208
-Agent loops found:      3     — burning $89/month you didn't know about
-Cascade risks:          1     — would have cost $52 in retries
-Repeated prompts:       47    — $12 wasted on identical calls
-Security threats:       0
-Budget overruns:        0
+Agent loops found:      3     — $14.80 wasted so far
+Infrastructure risks:   1     — $6.20 would have been wasted
+Repeated prompts:       47    — $3.40 spent on duplicate calls
 ─────────────────────────────────────────
-Estimated waste found:  $153/month
+Total waste detected:   $24.40
 False positives:        0 (never flagged a healthy call)
 Quality impact:         ZERO (your AI output was never touched)
 ```

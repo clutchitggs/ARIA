@@ -329,7 +329,6 @@ class Aria {
   getReport() {
     const s = this._savings;
     const totalWaste = s.loops_blocked.saved + s.security_blocked.saved + s.failures_prevented.saved + s.cache_hits.saved;
-    const monthlyEstimate = s.total_calls > 0 ? (totalWaste / s.total_calls) * s.total_calls * 22 * 8 : 0; // rough monthly projection
 
     const lines = [
       "",
@@ -339,20 +338,20 @@ class Aria {
     ];
 
     if (s.loops_blocked.count > 0)
-      lines.push(`Agent loops found:      ${s.loops_blocked.count}     — costing ~$${(s.loops_blocked.saved * 22 * 8).toFixed(0)}/month`);
+      lines.push(`Agent loops found:      ${s.loops_blocked.count}     — $${s.loops_blocked.saved.toFixed(2)} wasted so far`);
     if (s.failures_prevented.count > 0)
-      lines.push(`Infrastructure risks:   ${s.failures_prevented.count}     — would cost ~$${(s.failures_prevented.saved * 22 * 8).toFixed(0)}/month`);
+      lines.push(`Infrastructure risks:   ${s.failures_prevented.count}     — $${s.failures_prevented.saved.toFixed(2)} would have been wasted`);
     if (s.cache_hits.count > 0)
-      lines.push(`Repeated prompts:       ${s.cache_hits.count}    — wasting ~$${(s.cache_hits.saved * 22 * 8).toFixed(0)}/month on duplicates`);
+      lines.push(`Repeated prompts:       ${s.cache_hits.count}    — $${s.cache_hits.saved.toFixed(2)} spent on duplicate calls`);
     if (s.security_blocked.count > 0)
-      lines.push(`Security threats:       ${s.security_blocked.count}`);
+      lines.push(`Security threats:       ${s.security_blocked.count}     — $${s.security_blocked.saved.toFixed(2)} at risk`);
 
     if (totalWaste === 0 && s.total_calls > 0)
       lines.push(`Issues found:           0     — your system looks healthy`);
 
     lines.push("─────────────────────────────────────────");
     if (totalWaste > 0) {
-      lines.push(`Estimated waste found:  ~$${monthlyEstimate.toFixed(0)}/month`);
+      lines.push(`Total waste detected:   $${totalWaste.toFixed(2)}`);
     }
     lines.push(`False positives:        0`);
     lines.push(`Quality impact:         ZERO (your AI output was never touched)`);
@@ -367,7 +366,6 @@ class Aria {
         repeated_prompts: { count: s.cache_hits.count, cost: parseFloat(s.cache_hits.saved.toFixed(4)) },
         security_threats: { count: s.security_blocked.count, cost: parseFloat(s.security_blocked.saved.toFixed(4)) },
         total_waste_detected: parseFloat(totalWaste.toFixed(4)),
-        estimated_monthly_waste: parseFloat(monthlyEstimate.toFixed(2)),
         false_positives: 0,
         quality_impact: "zero"
       }
