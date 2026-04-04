@@ -37,7 +37,8 @@ class Aria {
     this.budget = options.budget || null;
     this.context = options.context || {};
     this.enabled = options.enabled !== false;
-    this.shadow = options.shadow || false; // Shadow mode: observe only, never block
+    this.activationKey = options.activationKey || null;
+    this.shadow = this.activationKey ? false : true; // Active mode requires activation key
     this.pilotId = options.pilotId || ("pilot-" + Math.random().toString(36).slice(2, 8)); // Auto-generated unique ID
 
     // Local infrastructure instances

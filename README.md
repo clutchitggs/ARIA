@@ -95,8 +95,7 @@ const Aria = require("aria-sdk");
 const aria = new Aria({
   provider: "anthropic",             // or "openai" or "google"
   apiKey: process.env.ANTHROPIC_API_KEY,
-  diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose",
-  shadow: true
+  diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose"
 });
 
 // Use instead of your normal API call
@@ -189,7 +188,7 @@ const aria = new Aria({
   diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose",
 
   // Optional
-  shadow: true,                             // observe only (default: false)
+  activationKey: "...",                     // unlocks active mode (blocks failures for real)
   budget: { total: 100.00 },               // monthly budget in dollars
   context: {                                // system topology (improves detection)
     agent_count: 3,
@@ -231,7 +230,7 @@ Remove 3 lines. Everything goes back to how it was.
 
 ## Roadmap
 
-Shadow mode is step one. ARIA is evolving from detection to active prevention to full AI runtime control.
+ARIA is currently in detection mode (free health audit). Active prevention — where ARIA actually blocks failures in real-time — is coming soon. Run the health audit, see what ARIA finds in your system, and you'll be first to know when active mode launches.
 
 ---
 
