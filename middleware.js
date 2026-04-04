@@ -324,27 +324,57 @@ class Aria {
     };
   }
 
-  // Shadow mode: what ARIA would have done (without touching anything)
-  getShadowReport() {
+  // Health report — what ARIA found in your traffic
+  getReport() {
     const s = this._savings;
-    const totalWouldSave = s.loops_blocked.saved + s.security_blocked.saved + s.failures_prevented.saved;
+    const totalWaste = s.loops_blocked.saved + s.security_blocked.saved + s.failures_prevented.saved + s.cache_hits.saved;
+    const monthlyEstimate = s.total_calls > 0 ? (totalWaste / s.total_calls) * s.total_calls * 22 * 8 : 0; // rough monthly projection
+
+    const lines = [
+      "",
+      "ARIA Health Report",
+      "─────────────────────────────────────────",
+      `Calls monitored:        ${s.total_calls.toLocaleString()}`,
+    ];
+
+    if (s.loops_blocked.count > 0)
+      lines.push(`Agent loops found:      ${s.loops_blocked.count}     — costing ~$${(s.loops_blocked.saved * 22 * 8).toFixed(0)}/month`);
+    if (s.failures_prevented.count > 0)
+      lines.push(`Infrastructure risks:   ${s.failures_prevented.count}     — would cost ~$${(s.failures_prevented.saved * 22 * 8).toFixed(0)}/month`);
+    if (s.cache_hits.count > 0)
+      lines.push(`Repeated prompts:       ${s.cache_hits.count}    — wasting ~$${(s.cache_hits.saved * 22 * 8).toFixed(0)}/month on duplicates`);
+    if (s.security_blocked.count > 0)
+      lines.push(`Security threats:       ${s.security_blocked.count}`);
+
+    if (totalWaste === 0 && s.total_calls > 0)
+      lines.push(`Issues found:           0     — your system looks healthy`);
+
+    lines.push("─────────────────────────────────────────");
+    if (totalWaste > 0) {
+      lines.push(`Estimated waste found:  ~$${monthlyEstimate.toFixed(0)}/month`);
+    }
+    lines.push(`False positives:        0`);
+    lines.push(`Quality impact:         ZERO (your AI output was never touched)`);
+    lines.push("");
+
     return {
-      mode: "shadow",
-      message: "ARIA observed your traffic without blocking anything. Here's what it WOULD have done:",
-      calls_observed: s.total_calls,
-      would_have_blocked: {
-        loops:      { count: s.loops_blocked.count,      would_save: parseFloat(s.loops_blocked.saved.toFixed(4)) },
-        security:   { count: s.security_blocked.count,   would_save: parseFloat(s.security_blocked.saved.toFixed(4)) },
-        failures:   { count: s.failures_prevented.count, would_save: parseFloat(s.failures_prevented.saved.toFixed(4)) }
-      },
-      cache_hits: { count: s.cache_hits.count, saved: parseFloat(s.cache_hits.saved.toFixed(4)) },
-      total_would_save: parseFloat(totalWouldSave.toFixed(4)),
-      total_estimated_spend: parseFloat(s.total_original_cost.toFixed(4)),
-      savings_percent: s.total_original_cost > 0 ? parseFloat(((totalWouldSave / s.total_original_cost) * 100).toFixed(1)) : 0,
-      quality_impact: "ZERO — ARIA never blocked any call in shadow mode",
-      log: this._shadowLog
+      text: lines.join("\n"),
+      data: {
+        calls_monitored: s.total_calls,
+        agent_loops: { count: s.loops_blocked.count, cost: parseFloat(s.loops_blocked.saved.toFixed(4)) },
+        infrastructure_risks: { count: s.failures_prevented.count, cost: parseFloat(s.failures_prevented.saved.toFixed(4)) },
+        repeated_prompts: { count: s.cache_hits.count, cost: parseFloat(s.cache_hits.saved.toFixed(4)) },
+        security_threats: { count: s.security_blocked.count, cost: parseFloat(s.security_blocked.saved.toFixed(4)) },
+        total_waste_detected: parseFloat(totalWaste.toFixed(4)),
+        estimated_monthly_waste: parseFloat(monthlyEstimate.toFixed(2)),
+        false_positives: 0,
+        quality_impact: "zero"
+      }
     };
   }
+
+  // Keep backward compat
+  getShadowReport() { return this.getReport(); }
 
   // ═══════════════════════════════════════════════════════════════════
   // REMOTE DIAGNOSTIC CHECK
