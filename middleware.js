@@ -352,9 +352,14 @@ class Aria {
     lines.push("─────────────────────────────────────────");
     if (totalWaste > 0) {
       lines.push(`Total waste detected:   $${totalWaste.toFixed(2)}`);
+      lines.push(`These failures are happening in your system right now.`);
     }
     lines.push(`False positives:        0`);
     lines.push(`Quality impact:         ZERO (your AI output was never touched)`);
+    if (totalWaste > 0) {
+      lines.push("");
+      lines.push("ARIA can prevent these automatically. Active prevention coming soon.");
+    }
     lines.push("");
 
     return {
