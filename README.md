@@ -8,6 +8,22 @@ Built for teams running AI agents or high-volume LLM workloads. Think of it as c
 
 ---
 
+## Why This Matters
+
+Agent loops are the failure everyone knows about — your agent repeats the same call 100 times and the bill spikes. Easy to spot.
+
+**The expensive failures are the ones you can't see:**
+
+Your app hits a rate limit. Your retry logic resends the failed calls. Those retries add more traffic. More calls fail. More retries. Each retry resends the full conversation context — paying for all tokens again. In 10 minutes, you've spent 5x your normal cost and got mostly errors.
+
+You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had detected the cascade at the start and paused for 2 minutes, you'd have spent $45.
+
+This is what Gartner means when they say 40% of AI agent projects get canceled due to cost overruns. It's not that AI is expensive — it's that failures multiply silently.
+
+ARIA watches for these patterns across calls, in real-time.
+
+---
+
 ## What You Get
 
 Install ARIA. Let it observe your traffic for a few days. Get a report showing what's going wrong.
@@ -67,22 +83,6 @@ node demo.js
   Total calls: 17 | Issues detected: 6 | Waste found: $0.64
   Quality impact: ZERO
 ```
-
----
-
-## Why This Matters
-
-Agent loops are the failure everyone knows about — your agent repeats the same call 100 times and the bill spikes. Easy to spot.
-
-**The expensive failures are the ones you can't see:**
-
-Your app hits a rate limit. Your retry logic resends the failed calls. Those retries add more traffic. More calls fail. More retries. Each retry resends the full conversation context — paying for all tokens again. In 10 minutes, you've spent 5x your normal cost and got mostly errors.
-
-You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had detected the cascade at the start and paused for 2 minutes, you'd have spent $45.
-
-This is what Gartner means when they say 40% of AI agent projects get canceled due to cost overruns. It's not that AI is expensive — it's that failures multiply silently.
-
-ARIA watches for these patterns across calls, in real-time.
 
 ---
 
