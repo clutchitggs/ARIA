@@ -101,24 +101,21 @@ node demo.js
 
 ## Setup (5 minutes)
 
-### 1. Install
+### Node.js
 
 ```bash
 npm install github:clutchitggs/ARIA
 ```
 
-### 2. Add to Your Code
-
 ```js
 const Aria = require("aria-sdk");
 
 const aria = new Aria({
-  provider: "anthropic",             // or "openai" or "google"
+  provider: "anthropic",
   apiKey: process.env.ANTHROPIC_API_KEY,
   diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose"
 });
 
-// Use instead of your normal API call
 const result = await aria.call({
   model: "claude-sonnet-4",
   messages: [{ role: "user", content: "..." }],
@@ -128,10 +125,40 @@ const result = await aria.call({
 // result is your normal AI response — completely unchanged
 ```
 
-### 3. Check Your Report Anytime
+### Python
+
+```bash
+pip install git+https://github.com/clutchitggs/ARIA.git#subdirectory=python
+```
+
+```python
+from aria import Aria
+
+aria = Aria(
+    provider="anthropic",
+    api_key=os.environ["ANTHROPIC_API_KEY"],
+    diagnostic_endpoint="https://aria-seven-umber.vercel.app/api/diagnose"
+)
+
+result = aria.call(
+    model="claude-sonnet-4",
+    messages=[{"role": "user", "content": "..."}],
+    max_tokens=1000
+)
+
+# result is your normal AI response — completely unchanged
+```
+
+### Check Your Report Anytime
 
 ```js
+// Node.js
 console.log(aria.getReport());
+```
+
+```python
+# Python
+print(aria.get_report()["text"])
 ```
 
 Your app works exactly as before. ARIA watches in the background and builds your health report as traffic flows through. The more calls it observes, the more accurate the report.
@@ -202,7 +229,14 @@ const aria = new Aria({
 
 ---
 
-## Providers Supported
+## Supported Languages
+
+| Language | Install |
+|---|---|
+| **Node.js** | `npm install github:clutchitggs/ARIA` |
+| **Python** | `pip install git+https://github.com/clutchitggs/ARIA.git#subdirectory=python` |
+
+## Supported Providers
 
 | Provider | Models |
 |---|---|
