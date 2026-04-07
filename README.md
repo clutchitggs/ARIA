@@ -8,22 +8,6 @@ Built for developers and teams running AI agents or high-volume LLM workloads.
 
 ---
 
-## Why This Matters
-
-Agent loops are the failure everyone knows about — your agent repeats the same call 100 times and the bill spikes. Easy to spot.
-
-**The expensive failures are the ones you can't see:**
-
-Your app hits a rate limit. Your retry logic resends the failed calls. Those retries add more traffic. More calls fail. More retries. Each retry resends the full conversation context — paying for all tokens again. In 10 minutes, you've spent 5x your normal cost and got mostly errors.
-
-You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had paused at the start, you'd have spent $45.
-
-40% of AI agent projects get canceled due to cost overruns (Gartner). It's not that AI is expensive — it's that failures multiply silently.
-
-ARIA stops them.
-
----
-
 ## See It In Action
 
 ![ARIA blocking an agent loop in real-time](demo.gif)
@@ -144,6 +128,20 @@ ARIA monitors every API call using:
 - **Active intervention** — in prevention mode, blocks calls that would fail or waste money
 
 Local checks (loops, security, cache) run on your machine. Infrastructure health analysis runs on ARIA's diagnostic server — it receives only numbers (rate limit %, latency, error rate), never prompts or API keys.
+
+---
+
+## Why This Matters
+
+Agent loops are the failure everyone knows about — your agent repeats the same call 100 times and the bill spikes. Easy to spot.
+
+**The expensive failures are the ones you can't see:**
+
+Your app hits a rate limit. Your retry logic resends the failed calls. Those retries add more traffic. More calls fail. More retries. Each retry resends the full conversation context — paying for all tokens again. In 10 minutes, you've spent 5x your normal cost and got mostly errors.
+
+You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had paused at the start, you'd have spent $45.
+
+40% of AI agent projects get canceled due to cost overruns (Gartner). It's not that AI is expensive — it's that failures multiply silently.
 
 ---
 
