@@ -56,6 +56,8 @@ Prevention mode blocks:
 
 ## See It In Action
 
+![ARIA blocking an agent loop in real-time](demo.gif)
+
 No API key needed:
 
 ```bash
