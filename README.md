@@ -24,100 +24,9 @@ ARIA stops them.
 
 ---
 
-## Two Modes
-
-### Detection (default — safe, zero risk)
-
-ARIA watches your traffic and reports what it finds. Doesn't block or change anything. Start here to see what's going on in your system.
-
-```python
-aria = Aria(provider="anthropic", api_key="...")
-```
-
-### Prevention (beta — actually stops failures)
-
-ARIA actively blocks agent loops, enforces budgets, prevents cascades. Same detection engine, but now it intervenes before money is wasted.
-
-```python
-aria = Aria(provider="anthropic", api_key="...", activation_key="your-key")
-```
-
-Prevention mode blocks:
-- **Agent loops** — caught at call #3, before call #100
-- **Duplicate calls** — cached response returned instantly, $0 cost
-- **Budget overruns** — hard stop when budget hits $0
-- **Cascade failures** — blocked when infrastructure health degrades
-- **Corrupted input** — blocked before it reaches the model
-- **Prompt injection** — quarantined before it hijacks your agent
-
-**Want a prevention key?** DM me or open an issue. Free during beta.
-
----
-
 ## See It In Action
 
 ![ARIA blocking an agent loop in real-time](demo.gif)
-
-No API key needed:
-
-```bash
-git clone https://github.com/clutchitggs/ARIA.git
-cd ARIA
-npm install
-node demo.js
-```
-
-```
-  Agent stuck in a loop:
-  [ 7] API call (1st attempt)         healthy
-  [ 8] API call (2nd attempt)         healthy — same call repeated...
-  [ 9] LOOP BLOCKED                   saved $0.0540
-       Agent stuck — same call 3x in 60s. Stopped.
-
-  Infrastructure degradation:
-  [12] CASCADE BLOCKED                saved $0.0500
-       System overloaded — call would have failed.
-  [14] BUDGET STOP                    saved $0.4500
-       Budget at $0 — expensive call blocked.
-
-  Total calls: 17 | Failures stopped: 6 | Money saved: $0.64
-```
-
----
-
-## Who This Is For
-
-- **Solo devs and indie hackers** whose agents quietly burn through API credits
-- **Small teams** running AI workflows without a full infra team to monitor costs
-- **Anyone who's had an agent loop or a surprise AI bill**
-
-If you've ever looked at your Anthropic/OpenAI invoice and thought "how did I spend that much?" — ARIA shows you why and stops it from happening again.
-
----
-
-## Health Report
-
-After running for a few days, check what ARIA found:
-
-```python
-print(aria.get_report()["text"])
-```
-
-```
-ARIA Health Report
------------------------------------------
-Calls monitored:        4,208
-Agent loops found:      3     — $14.80 wasted so far
-Infrastructure risks:   1     — $6.20 would have been wasted
-Repeated prompts:       47    — $3.40 spent on duplicate calls
------------------------------------------
-Total waste detected:   $24.40
-These failures are happening in your system right now.
-False positives:        0
-Quality impact:         ZERO (your AI output was never touched)
-
-ARIA can prevent these automatically. Request a prevention key to activate.
-```
 
 ---
 
@@ -166,6 +75,62 @@ result = aria.call(
     max_tokens=1000
 )
 ```
+
+---
+
+## Health Report
+
+After running for a few days, check what ARIA found:
+
+```python
+print(aria.get_report()["text"])
+```
+
+```
+ARIA Health Report
+-----------------------------------------
+Calls monitored:        4,208
+Agent loops found:      3     — $14.80 wasted so far
+Infrastructure risks:   1     — $6.20 would have been wasted
+Repeated prompts:       47    — $3.40 spent on duplicate calls
+-----------------------------------------
+Total waste detected:   $24.40
+These failures are happening in your system right now.
+False positives:        0
+Quality impact:         ZERO (your AI output was never touched)
+
+ARIA can prevent these automatically. Request a prevention key to activate.
+```
+
+---
+
+## Two Modes
+
+### Detection (default — safe, zero risk)
+
+ARIA watches your traffic and reports what it finds. Doesn't block or change anything. Start here to see what's going on in your system.
+
+```python
+aria = Aria(provider="anthropic", api_key="...")
+```
+
+### Prevention (beta — actually stops failures)
+
+ARIA actively blocks agent loops, enforces budgets, prevents cascades. Same detection engine, but now it intervenes before money is wasted.
+
+```python
+aria = Aria(provider="anthropic", api_key="...", activation_key="your-key")
+```
+
+Prevention mode blocks:
+- **Agent loops** — caught at call #3, before call #100
+- **Duplicate calls** — cached response returned instantly, $0 cost
+- **Budget overruns** — hard stop when budget hits $0
+- **Cascade failures** — blocked when infrastructure health degrades
+- **Corrupted input** — blocked before it reaches the model
+- **Prompt injection** — quarantined before it hijacks your agent
+
+**Want a prevention key?** DM me or open an issue. Free during beta.
 
 ---
 
