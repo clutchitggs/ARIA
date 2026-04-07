@@ -116,7 +116,7 @@ These failures are happening in your system right now.
 False positives:        0
 Quality impact:         ZERO (your AI output was never touched)
 
-ARIA can prevent these automatically. Active prevention coming soon.
+ARIA can prevent these automatically. Request a prevention key to activate.
 ```
 
 ---
