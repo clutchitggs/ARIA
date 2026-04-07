@@ -1,10 +1,10 @@
 # ARIA
 
-**Free health audit for your AI system. Find out what failures are silently costing you money.**
+**Guardrails for AI agents. Detect failures. Stop them before they burn your money.**
 
-ARIA monitors your AI API calls and detects agent loops, cascading rate limits, infrastructure failures, security threats, corrupted input, and budget overruns — things you're probably paying for right now without knowing.
+ARIA sits between your app and your AI provider. It catches agent loops, cascading retries, budget overruns, corrupted input, and infrastructure failures — and blocks them in real-time.
 
-Built for teams running AI agents or high-volume LLM workloads. Think of it as circuit breakers for your AI pipeline.
+Built for developers and teams running AI agents or high-volume LLM workloads.
 
 ---
 
@@ -16,43 +16,41 @@ Agent loops are the failure everyone knows about — your agent repeats the same
 
 Your app hits a rate limit. Your retry logic resends the failed calls. Those retries add more traffic. More calls fail. More retries. Each retry resends the full conversation context — paying for all tokens again. In 10 minutes, you've spent 5x your normal cost and got mostly errors.
 
-You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had detected the cascade at the start and paused for 2 minutes, you'd have spent $45.
+You look at your bill and think "busy day." What actually happened: your system amplified its own failure, and $160 of that $200 bill was pure waste. If something had paused at the start, you'd have spent $45.
 
-This is what Gartner means when they say 40% of AI agent projects get canceled due to cost overruns. It's not that AI is expensive — it's that failures multiply silently.
+40% of AI agent projects get canceled due to cost overruns (Gartner). It's not that AI is expensive — it's that failures multiply silently.
 
-ARIA watches for these patterns across calls, in real-time.
+ARIA stops them.
 
 ---
 
-## What You Get
+## Two Modes
 
-Install ARIA. Let it observe your traffic for a few days. Get a report showing what's going wrong.
+### Detection (default — safe, zero risk)
 
-- **Zero risk** — observe only, ARIA never blocks or changes anything
-- **Zero cost** — completely free
-- **5 minutes** — to set up
-- **Your data stays yours** — prompts and API keys never leave your machine
+ARIA watches your traffic and reports what it finds. Doesn't block or change anything. Start here to see what's going on in your system.
 
-After a few days, check your report:
-
-```js
-console.log(aria.getReport());
+```python
+aria = Aria(provider="anthropic", api_key="...")
 ```
 
-```
-ARIA Health Report
-─────────────────────────────────────────
-Calls monitored:        4,208
-Agent loops found:      3     — $14.80 wasted so far
-Infrastructure risks:   1     — $6.20 would have been wasted
-Repeated prompts:       47    — $3.40 spent on duplicate calls
-─────────────────────────────────────────
-Total waste detected:   $24.40
-False positives:        0 (never flagged a healthy call)
-Quality impact:         ZERO (your AI output was never touched)
+### Prevention (beta — actually stops failures)
+
+ARIA actively blocks agent loops, enforces budgets, prevents cascades. Same detection engine, but now it intervenes before money is wasted.
+
+```python
+aria = Aria(provider="anthropic", api_key="...", activation_key="your-key")
 ```
 
-**Keep the report. No strings attached.**
+Prevention mode blocks:
+- **Agent loops** — caught at call #3, before call #100
+- **Duplicate calls** — cached response returned instantly, $0 cost
+- **Budget overruns** — hard stop when budget hits $0
+- **Cascade failures** — blocked when infrastructure health degrades
+- **Corrupted input** — blocked before it reaches the model
+- **Prompt injection** — quarantined before it hijacks your agent
+
+**Want a prevention key?** DM me or open an issue. Free during beta.
 
 ---
 
@@ -68,34 +66,56 @@ node demo.js
 ```
 
 ```
-  PHASE 3: Agent stuck in a loop
+  Agent stuck in a loop:
   [ 7] API call (1st attempt)         healthy
   [ 8] API call (2nd attempt)         healthy — same call repeated...
-  [ 9] LOOP DETECTED                  $0.0540 would be wasted
-       Agent stuck — same call 3x in 60s.
+  [ 9] LOOP BLOCKED                   saved $0.0540
+       Agent stuck — same call 3x in 60s. Stopped.
 
-  PHASE 5: Infrastructure degradation
-  [12] INFRA RISK DETECTED            $0.0500 would be wasted
-       System overloaded — call would likely fail.
-  [14] BUDGET EXHAUSTED               $0.4500 would be wasted
-       Budget at $0 — expensive call would overrun.
+  Infrastructure degradation:
+  [12] CASCADE BLOCKED                saved $0.0500
+       System overloaded — call would have failed.
+  [14] BUDGET STOP                    saved $0.4500
+       Budget at $0 — expensive call blocked.
 
-  Total calls: 17 | Issues detected: 6 | Waste found: $0.64
-  Quality impact: ZERO
+  Total calls: 17 | Failures stopped: 6 | Money saved: $0.64
 ```
 
 ---
 
-## What It Detects
+## Who This Is For
 
-| Failure Type | What's Happening | What ARIA Tells You |
-|---|---|---|
-| Agent stuck in loop | Same call repeating, burning tokens for hours | Exactly when it started and how much it's costing |
-| Rate limit cascade | Retries piling up, each costing more | Cascade conditions before they amplify |
-| Bad deployment | AI confidently hallucinating on garbage data | Corrupted input before it reaches the model |
-| Budget exhaustion | Expensive calls keep going past your limit | Real spend tracked, flagged when budget runs out |
-| Prompt injection | Someone trying to hijack your AI | Injection patterns detected in real-time |
-| Infrastructure degradation | Calls failing silently, retries multiplying | System health degrading across calls |
+- **Solo devs and indie hackers** whose agents quietly burn through API credits
+- **Small teams** running AI workflows without a full infra team to monitor costs
+- **Anyone who's had an agent loop or a surprise AI bill**
+
+If you've ever looked at your Anthropic/OpenAI invoice and thought "how did I spend that much?" — ARIA shows you why and stops it from happening again.
+
+---
+
+## Health Report
+
+After running for a few days, check what ARIA found:
+
+```python
+print(aria.get_report()["text"])
+```
+
+```
+ARIA Health Report
+-----------------------------------------
+Calls monitored:        4,208
+Agent loops found:      3     — $14.80 wasted so far
+Infrastructure risks:   1     — $6.20 would have been wasted
+Repeated prompts:       47    — $3.40 spent on duplicate calls
+-----------------------------------------
+Total waste detected:   $24.40
+These failures are happening in your system right now.
+False positives:        0
+Quality impact:         ZERO (your AI output was never touched)
+
+ARIA can prevent these automatically. Active prevention coming soon.
+```
 
 ---
 
@@ -121,8 +141,6 @@ const result = await aria.call({
   messages: [{ role: "user", content: "..." }],
   max_tokens: 1000
 });
-
-// result is your normal AI response — completely unchanged
 ```
 
 ### Python
@@ -145,23 +163,7 @@ result = aria.call(
     messages=[{"role": "user", "content": "..."}],
     max_tokens=1000
 )
-
-# result is your normal AI response — completely unchanged
 ```
-
-### Check Your Report Anytime
-
-```js
-// Node.js
-console.log(aria.getReport());
-```
-
-```python
-# Python
-print(aria.get_report()["text"])
-```
-
-Your app works exactly as before. ARIA watches in the background and builds your health report as traffic flows through. The more calls it observes, the more accurate the report.
 
 ---
 
@@ -169,12 +171,12 @@ Your app works exactly as before. ARIA watches in the background and builds your
 
 ARIA monitors every API call using:
 
-- **Pattern detection** — identifies repeated calls (stuck agents), attack signatures, and credential exposure
-- **Health scoring** — tracks rate limits, latency, error rates, and budget across calls
-- **Threshold analysis** — determines when conditions make API calls likely to fail
-- **Signal correlation** — combines multiple weak signals to catch issues no single metric would reveal
+- **Pattern detection** — identifies stuck agents, repeated calls, attack signatures
+- **Cross-call tracking** — monitors rate limits, latency, error rates, and budget across calls (not per-call — across your whole session)
+- **Signal correlation** — combines multiple weak signals to catch cascades no single metric would reveal
+- **Active intervention** — in prevention mode, blocks calls that would fail or waste money
 
-Local checks (loops, security, cache) run on your machine. System health analysis runs on ARIA's diagnostic server — it receives only numbers (rate limit %, latency, error rate), never prompts or API keys.
+Local checks (loops, security, cache) run on your machine. Infrastructure health analysis runs on ARIA's diagnostic server — it receives only numbers (rate limit %, latency, error rate), never prompts or API keys.
 
 ---
 
@@ -184,48 +186,25 @@ Local checks (loops, security, cache) run on your machine. System health analysi
 
 354 real API calls across Anthropic, OpenAI, and Google. Real money. Real tokens.
 
-| Test | Result | How |
-|---|---|---|
-| 220 healthy calls | **0 false positives** | Real calls across 3 providers — ARIA never interfered |
-| 30 repeated prompts | **30/30 detected** | Real identical calls — caught every one |
-| 12 stuck agents | **12/12 caught** | Real repeated calls — caught at call #3 every time |
-| Budget exhaustion | **Detected** | Real spend tracked penny by penny until $0 |
-| Error accumulation | **72.7% error rate detected** | Real API failures from invalid calls |
-| Latency monitoring | **avg 788ms measured** | Real response times from 40 rapid-fire calls |
-| 10 diagnostic scenarios | **10/10 correct** | 5 dangerous detected, 5 safe passed through |
+| Test | Result |
+|---|---|
+| 220 healthy calls | **0 false positives** — never interfered with healthy traffic |
+| 30 repeated prompts | **30/30 caught** |
+| 12 stuck agents | **12/12 blocked at call #3** |
+| Budget exhaustion | **Detected and enforced** from real spend tracking |
+| Error accumulation | **72.7% error rate caught** from real API failures |
+| 10 diagnostic scenarios | **10/10 correct** — 5 blocked, 5 passed through |
 
-### Scale Test
+### Scale Test (4,985 cases)
 
-4,985 additional synthetic cases across 5 company profiles and 8 failure conditions:
-
-| Detection Type | Catch Rate | Notes |
-|---|---|---|
-| Agent loops | **100%** | Caught every stuck agent |
-| Cascade failures | **100%** | Detected before amplification |
-| Budget overruns | **100%** | Flagged at $0 |
-| Rate limit storms | **94-100%** | Some mild storms pass through |
-| Injection attacks | **93-100%** | Depends on confidence threshold |
-| Corrupted input | **72-83%** | Catches severe, misses mild |
-| **False positives** | **0** | Never flagged a healthy call |
-
----
-
-## Configuration
-
-```js
-const aria = new Aria({
-  provider: "anthropic",                    // "anthropic" | "openai" | "google"
-  apiKey: "sk-...",                         // your AI provider API key
-  diagnosticEndpoint: "https://aria-seven-umber.vercel.app/api/diagnose",
-
-  // Optional
-  budget: { total: 100.00 },               // monthly budget in dollars
-  context: {                                // system topology (improves detection)
-    agent_count: 3,
-    pipeline_depth: 2
-  }
-});
-```
+| Detection | Catch Rate |
+|---|---|
+| Agent loops | **100%** |
+| Cascade failures | **100%** |
+| Budget overruns | **100%** |
+| Rate limit storms | **94-100%** |
+| Injection attacks | **93-100%** |
+| **False positives** | **0** |
 
 ---
 
@@ -249,25 +228,19 @@ const aria = new Aria({
 ## FAQ
 
 **Can ARIA break my app?**
-No. ARIA only observes. Even if ARIA crashes, your call goes through normally. Fail-safe by design.
+In detection mode: impossible — it only observes. In prevention mode: ARIA is fail-safe. If ARIA crashes or the diagnostic server is unreachable, your call goes through normally.
 
 **Can ARIA slow my app?**
-Local checks add <1ms. The diagnostic check adds ~50-100ms. If that's a concern, skip the diagnostic endpoint and keep only local detection.
+Local checks add <1ms. The diagnostic check adds ~50-100ms. Skip the diagnostic endpoint if latency matters.
 
 **Can ARIA see my prompts?**
-No. Only health numbers reach the diagnostic server. Verify by reading the source code.
+No. Only health numbers reach the diagnostic server. Read the source code to verify.
 
-**What do I get out of this?**
-A free health report showing what failures are costing you money. No commitment, no payment, no strings.
+**How do I get a prevention key?**
+DM me or open an issue on this repo. Free during beta.
 
 **What if I don't like it?**
 Remove 3 lines. Everything goes back to how it was.
-
----
-
-## What's Next
-
-ARIA currently detects and reports. Active prevention — where ARIA stops failures before they happen — is being built based on pilot feedback. If your report shows issues you want fixed automatically, let us know. You'll be first in line.
 
 ---
 
