@@ -127,7 +127,7 @@ ARIA monitors every API call using:
 - **Signal correlation** — combines multiple weak signals to catch cascades no single metric would reveal
 - **Active intervention** — in prevention mode, blocks calls that would fail or waste money
 
-Local checks (loops, security, cache) run on your machine. Infrastructure health analysis runs on ARIA's diagnostic server — it receives only numbers (rate limit %, latency, error rate), never prompts or API keys.
+**Where each check runs.** Loops, cache, and basic rate-limit shaping run locally on your machine. Security signals (injection risk, credentials in input, exfiltration risk) and infrastructure-health analysis are evaluated on ARIA's diagnostic server — it receives only numbers (rate-limit %, latency, error rate, content metrics), never prompts or API keys. Set `diagnosticEndpoint: null` to run fully local; security signals are not evaluated in that mode.
 
 ---
 
@@ -147,29 +147,17 @@ You look at your bill and think "busy day." What actually happened: your system 
 
 ## Validation
 
-### Real API Proof
+ARIA has been exercised against the failure modes it claims to detect — agent loops, cascade failures, budget overruns, rate-limit storms, and injection attacks — using both real API traffic across Anthropic, OpenAI, and Google providers, and a synthetic scenario harness.
 
-354 real API calls across Anthropic, OpenAI, and Google. Real money. Real tokens.
+A formal, reproducible test suite is in progress and will land in this repo. Until then, treat the validation below as **development testing**, not a published benchmark.
 
-| Test | Result |
-|---|---|
-| 220 healthy calls | **0 false positives** — never interfered with healthy traffic |
-| 30 repeated prompts | **30/30 caught** |
-| 12 stuck agents | **12/12 blocked at call #3** |
-| Budget exhaustion | **Detected and enforced** from real spend tracking |
-| Error accumulation | **72.7% error rate caught** from real API failures |
-| 10 diagnostic scenarios | **10/10 correct** — 5 blocked, 5 passed through |
+What was observed during development:
 
-### Scale Test (4,985 cases)
+- **Agent loops, cascade failures, budget overruns** — caught reliably under default thresholds.
+- **Rate-limit storms, injection attacks** — caught under most tested scenarios.
+- **Healthy traffic** — not interfered with under the mix that was tested.
 
-| Detection | Catch Rate |
-|---|---|
-| Agent loops | **100%** |
-| Cascade failures | **100%** |
-| Budget overruns | **100%** |
-| Rate limit storms | **94-100%** |
-| Injection attacks | **93-100%** |
-| **False positives** | **0** |
+Specific catch-rate numbers will be republished once the reproducible suite is in this repo so anyone can run them.
 
 ---
 
